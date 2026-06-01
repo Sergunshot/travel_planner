@@ -17,8 +17,11 @@ travel_planner/
 │   └── routers/
 │       ├── projects.py   # Project endpoints
 │       └── places.py     # Place endpoints
+├── tests/
+│   └── test_main.py      # Automated pytest suite (14 tests)
 ├── Dockerfile
 ├── docker-compose.yaml
+├── pytest.ini
 └── requirements.txt
 ```
 
@@ -144,6 +147,49 @@ Returns `400 Bad Request` if any associated place has `is_visited: true`.
 ```bash
 curl -X DELETE http://localhost:8000/projects/1
 ```
+
+---
+
+## Automated Testing
+
+The test suite lives in `tests/test_main.py` and covers all core business rules. Tests run against an isolated **in-memory SQLite database** — the production `travel.db` file is never touched. Calls to the external Art Institute of Chicago API are mocked, so the suite runs fully offline and completes in under a second.
+
+### Run inside Docker (recommended)
+
+Make sure the container is running (`docker-compose up -d`), then:
+
+```bash
+docker-compose exec web pytest
+```
+
+For quieter output:
+
+```bash
+docker-compose exec web pytest -q
+```
+
+For verbose output showing each test name:
+
+```bash
+docker-compose exec web pytest -v
+```
+
+### Run locally
+
+```bash
+pip install -r requirements.txt
+pytest
+```
+
+### What is tested
+
+| # | Test class | Scenario |
+|---|-----------|----------|
+| 1 | `TestCreateProject` | Project is created with correct fields; appears in list; accepts nested places at creation time |
+| 2 | `TestDuplicateExternalId` | Duplicate `external_id` within a project is rejected; same ID is allowed across different projects |
+| 3 | `TestMaxPlacesLimit` | Exactly 10 places are accepted; the 11th is rejected with HTTP 400 |
+| 4 | `TestProjectAutoCompletion` | Project flips to `is_completed=true` only after the last place is marked visited |
+| 5 | `TestDeleteProjectWithVisitedPlace` | Deletion is blocked when any place is visited; succeeds otherwise |
 
 ---
 
