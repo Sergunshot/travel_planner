@@ -3,3 +3,5 @@ uvicorn
 sqlalchemy
 pydantic
 httpx
+pytest
+pytest-asyncio
